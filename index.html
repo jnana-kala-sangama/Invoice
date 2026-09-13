@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jnana Kala Sangama - Monthly Invoice Generator</title>
+    <title>Jnana Kala Sangama Bengaluru - Monthly Invoice Generator</title>
     <style>
         :root {
             --primary: #1a365d;
@@ -199,7 +199,7 @@
         <div class="header-grid">
             <div>
                 <div class="title">MONTHLY INVOICE</div>
-                <input type="text" value="Jnana Kala Sangama" style="font-weight: bold; font-size: 16px;">
+                <input type="text" value="Jnana Kala Sangama Bengaluru" style="font-weight: bold; font-size: 16px;">
                 <input type="text" value="[Institute Address / Location, Bengaluru]">
                 <input type="text" value="Bengaluru, Karnataka, India">
                 <input type="text" value="Phone: +91 90081 78901 | Email: contact@jnanakalasangama.org">
@@ -222,8 +222,8 @@
                                 <option value="June 2026">June 2026</option>
                                 <option value="July 2026">July 2026</option>
                                 <option value="August 2026">August 2026</option>
-                                <option value="September 2026">September 2026</option>
-                                <option value="October 2026" selected>October 2026</option>
+                                <option value="September 2026" selected>September 2026</option>
+                                <option value="October 2026">October 2026</option>
                                 <option value="November 2026">November 2026</option>
                                 <option value="December 2026">December 2026</option>
                             </select>
@@ -242,14 +242,14 @@
         </div>
 
         <!-- Billed To (Google Sheet Dropdown Linked) -->
-        const GOOGLE_SHEET_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vS1qn81TUXryD3_pwN1opVKmYKsKp1C5fobDJMW4ybUWO0d_R605V9foWcKM9Fi3N9WEPN2N16dL06s/pub?output=csv        <div class="bill-to">
+        <div class="bill-to">
             <div class="section-title">Billed To (Select Student)</div>
             <select id="student-dropdown" onchange="onStudentSelect(this.value)" style="font-weight: bold; font-size: 15px; margin-bottom: 5px;">
-                <option value="">-- Select Student --</option>
+                <option value="">-- Loading Students... --</option>
             </select>
-            <input type="text" id="student-id" placeholder="Student ID / Roll No" value="Roll No: JKS-ST-101">
-            <input type="text" id="student-address" placeholder="Address" value="Indiranagar, Bengaluru">
-            <input type="text" id="student-contact" placeholder="Phone / Email" value="Phone: +91 98765 43210">
+            <input type="text" id="student-id" placeholder="Student ID / Roll No" value="">
+            <input type="text" id="student-address" placeholder="Address" value="">
+            <input type="text" id="student-contact" placeholder="Phone / Email" value="">
         </div>
 
         <!-- Monthly Items Table -->
@@ -286,10 +286,15 @@
 
         <!-- Payment Info Footer -->
         <div class="info-heading">Payment Methods & Instructions</div>
-        <textarea rows="3">• PhonePe / GPay / Paytm UPI ID: 9008178901@upi&#10;• Contact Number for Payment Confirmation: +91 90081 78901&#10;• Bank Transfer: Account Name: Jnana Kala Sangama | Account #: XXXXXXXXXX | IFSC: XXXX0000000&#10;• Cheque Payable To: "Jnana Kala Sangama"</textarea>
+        <textarea rows="3">• PhonePe / GPay / Paytm UPI ID: 9008178901@upi
+• Contact Number for Payment Confirmation: +91 90081 78901
+• Bank Transfer: Account Name: Jnana Kala Sangama | Account #: XXXXXXXXXX | IFSC: XXXX0000000
+• Cheque Payable To: "Jnana Kala Sangama"</textarea>
 
         <div class="info-heading">Terms & Rules</div>
-        <textarea rows="2">• Monthly fees must be settled by the 10th of every calendar month.&#10;• Fees paid are non-refundable and non-transferable across terms.&#10;• Prior notice is required for extended leave of absence.</textarea>
+        <textarea rows="2">• Monthly fees must be settled by the 10th of every calendar month.
+• Fees paid are non-refundable and non-transferable across terms.
+• Prior notice is required for extended leave of absence.</textarea>
     </div>
 
     <script>
@@ -300,46 +305,59 @@
             "September 2026", "October 2026", "November 2026", "December 2026"
         ];
 
-        // Default Student Array (Used if Google Sheet URL is not populated)
-        let studentsData = [
-            { name: "Aarav Sharma", id: "Roll No: JKS-ST-101", address: "Indiranagar, Bengaluru", contact: "+91 98765 43210" },
-            { name: "Ananya Rao", id: "Roll No: JKS-ST-102", address: "Jayanagar, Bengaluru", contact: "+91 98765 12345" },
-            { name: "Vihaan Kulkarni", id: "Roll No: JKS-ST-103", address: "Malleshwaram, Bengaluru", contact: "+91 98123 45678" }
-        ];
+        // Linked to your published Google Sheet CSV
+        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1qn81TUXryD3_pwN1opVKmYKsKp1C5fobDJMW4ybUWO0d_R605V9foWcKM9Fi3N9WEPN2N16dL06s/pub?output=csv";
 
-        /*
-          PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK BELOW TO AUTO-SYNC:
-          1. In Google Sheets: File -> Share -> Publish to web.
-          2. Select your sheet tab and choose "Comma-separated values (.csv)".
-          3. Paste the generated URL inside the quotes below:
-        */
-        const GOOGLE_SHEET_CSV_URL = ""; 
+        let studentsData = [];
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"' && line[i + 1] === '"') {
+                    current += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
 
         async function fetchGoogleSheetStudents() {
-            if (!GOOGLE_SHEET_CSV_URL) return;
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
+                const textData = await response.text();
+                const lines = textData.split(/\r?\n/);
                 const fetched = [];
-                rows.forEach(row => {
-                    const cols = row.split(',');
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const cols = parseCSVLine(lines[i]);
                     if (cols[0]) {
                         fetched.push({
-                            name: cols[0].trim(),
-                            id: cols[1] ? cols[1].trim() : '',
-                            address: cols[2] ? cols[2].trim() : '',
-                            contact: cols[3] ? cols[3].trim() : ''
+                            name: cols[0],
+                            id: cols[1] ? `Roll No: ${cols[1]}` : '',
+                            address: cols[2] || '',
+                            contact: cols[3] || ''
                         });
                     }
-                });
+                }
                 if (fetched.length > 0) {
                     studentsData = fetched;
-                    populateStudentDropdown();
                 }
             } catch (err) {
-                console.log("Loaded default student list.");
+                console.warn("Could not fetch students from Google Sheet. Check published URL permissions.");
             }
+            populateStudentDropdown();
         }
 
         function populateStudentDropdown() {
@@ -348,12 +366,19 @@
             studentsData.forEach((st, i) => {
                 select.innerHTML += `<option value="${i}">${st.name}</option>`;
             });
-            select.selectedIndex = 1;
-            onStudentSelect("0");
+            if (studentsData.length > 0) {
+                select.selectedIndex = 1;
+                onStudentSelect("0");
+            }
         }
 
         function onStudentSelect(index) {
-            if (index === "" || !studentsData[index]) return;
+            if (index === "" || !studentsData[index]) {
+                document.getElementById('student-id').value = '';
+                document.getElementById('student-address').value = '';
+                document.getElementById('student-contact').value = '';
+                return;
+            }
             const st = studentsData[index];
             document.getElementById('student-id').value = st.id;
             document.getElementById('student-address').value = st.address;
@@ -361,8 +386,8 @@
         }
 
         const initialData = [
-            { category: "Keyboard", month: "October 2026", desc: "Monthly Package (8 Sessions)", rate: 2000, discount: 0, qty: 1 },
-            { category: "Bharatnatyam", month: "October 2026", desc: "Monthly Package (8 Sessions)", rate: 1800, discount: 200, qty: 1 }
+            { category: "Keyboard", month: "September 2026", desc: "Monthly Package (8 Sessions)", rate: 2000, discount: 0, qty: 1 },
+            { category: "Bharatnatyam", month: "September 2026", desc: "Monthly Package (8 Sessions)", rate: 1800, discount: 200, qty: 1 }
         ];
 
         document.getElementById('invoice-date').valueAsDate = new Date();
@@ -432,13 +457,9 @@
             let grandTotal = 0;
 
             initialData.forEach(item => {
-                const itemGross = item.rate;
-                const itemDiscount = item.discount;
-                const itemNet = item.rate - item.discount;
-
-                gross += itemGross;
-                savings += itemDiscount;
-                grandTotal += itemNet;
+                gross += item.rate;
+                savings += item.discount;
+                grandTotal += (item.rate - item.discount);
             });
 
             document.getElementById('gross-total').textContent = `₹${gross.toFixed(2)}`;
@@ -446,7 +467,6 @@
             document.getElementById('grand-total').textContent = `₹${grandTotal.toFixed(2)}`;
         }
 
-        populateStudentDropdown();
         fetchGoogleSheetStudents();
         renderRows();
     </script>
